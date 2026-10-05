@@ -27,7 +27,7 @@ A primeira versão web fica em `web/`:
 
 A interface web pode ser publicada pelo GitHub Pages. Depois de habilitar o Pages para a branch `main`, abra:
 
-`https://ramontec tst.github.io/orcafacil/web/`
+`https://ramontecst.github.io/orcafacil/web/`
 
 > Substitua o espaço do endereço por nada: `ramontectst.github.io`.
 
