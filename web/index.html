@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>OrçaFácil Mobile</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>OrçaFácil</h1>
+      <p>Orçamentos rápidos pelo celular</p>
+    </div>
+    <button id="novoBtn" class="secondary">Novo</button>
+  </header>
+
+  <main class="container">
+    <section id="formView" class="view">
+      <div class="card">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">NOVO ORÇAMENTO</span>
+            <h2>Dados do cliente</h2>
+          </div>
+          <span id="numeroPreview" class="badge">#1</span>
+        </div>
+
+        <label>Nome do cliente
+          <input id="cliente" type="text" placeholder="Ex.: João da Silva" autocomplete="name">
+        </label>
+
+        <div class="grid-2">
+          <label>Telefone
+            <input id="telefone" type="tel" placeholder="(75) 99999-9999" autocomplete="tel">
+          </label>
+          <label>Validade
+            <select id="validade">
+              <option value="7">7 dias</option>
+              <option value="10">10 dias</option>
+              <option value="15">15 dias</option>
+              <option value="30">30 dias</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">ITENS</span>
+            <h2>O que será feito?</h2>
+          </div>
+        </div>
+
+        <div class="item-form">
+          <label>Descrição
+            <input id="descricao" type="text" placeholder="Ex.: Manutenção do computador">
+          </label>
+          <div class="grid-2">
+            <label>Quantidade
+              <input id="quantidade" type="number" min="0.01" step="0.01" value="1">
+            </label>
+            <label>Valor unitário
+              <input id="valor" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+            </label>
+          </div>
+          <button id="adicionarBtn" class="primary full">+ Adicionar item</button>
+        </div>
+
+        <div id="itensLista" class="items-list">
+          <div class="empty">Nenhum item adicionado.</div>
+        </div>
+
+        <div class="total-row">
+          <span>Total</span>
+          <strong id="total">R$ 0,00</strong>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Observações
+          <textarea id="observacoes" rows="3" placeholder="Prazo, forma de pagamento, garantia..."></textarea>
+        </label>
+      </div>
+
+      <button id="gerarBtn" class="primary full big">Gerar orçamento em PDF</button>
+    </section>
+
+    <section id="historicoView" class="view hidden">
+      <div class="page-title">
+        <div>
+          <span class="eyebrow">HISTÓRICO</span>
+          <h2>Meus orçamentos</h2>
+        </div>
+        <button id="voltarBtn" class="secondary">Novo orçamento</button>
+      </div>
+      <div id="historicoLista"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button id="navNovo" class="nav-active">Novo orçamento</button>
+    <button id="navHistorico">Histórico</button>
+  </nav>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
