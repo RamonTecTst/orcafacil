@@ -8,7 +8,7 @@ from dados import (
     criar_banco,
     salvar_orcamento,
 )
-from historico import buscar_orcamento, listar_orcamentos
+from historico import atualizar_pdf, buscar_orcamento, listar_orcamentos
 from pdf import gerar_pdf
 
 
@@ -233,11 +233,63 @@ class OrcaFacilApp:
 
         ttk.Button(
             botoes,
-            text="Atualizar",
-            command=lambda: self.atualizar_historico(
-                tabela
-            ),
+            text="Gerar PDF",
+            command=lambda: self.gerar_pdf_historico(tabela),
         ).pack(side="left", padx=8)
+
+        ttk.Button(
+            botoes,
+            text="Atualizar",
+            command=lambda: self.atualizar_historico(tabela),
+        ).pack(side="left", padx=8)
+
+    def gerar_pdf_historico(self, tabela):
+        selecionado = tabela.selection()
+
+        if not selecionado:
+            messagebox.showwarning(
+                "Atenção",
+                "Selecione um orçamento.",
+            )
+            return
+
+        numero = int(selecionado[0])
+        resultado = buscar_orcamento(numero)
+
+        if not resultado:
+            messagebox.showerror(
+                "Erro",
+                "Orçamento não encontrado.",
+            )
+            return
+
+        orcamento, itens = resultado
+        _, cliente, data, _, _, _, total, _ = orcamento
+
+        data_exibicao = data
+        if len(data) == 10 and data[4] == "-" and data[7] == "-":
+            data_exibicao = f"{data[8:10]}/{data[5:7]}/{data[:4]}"
+
+        servicos_pdf = [
+            (descricao, subtotal)
+            for descricao, _, _, subtotal in itens
+        ]
+
+        caminho = gerar_pdf(
+            numero,
+            cliente,
+            servicos_pdf,
+            total,
+            data_exibicao,
+        )
+
+        atualizar_pdf(numero, caminho)
+
+        messagebox.showinfo(
+            "PDF gerado",
+            f"PDF do orçamento #{numero} gerado com sucesso!\n\n"
+            f"Arquivo:\n{caminho}",
+        )
 
     def atualizar_historico(self, tabela):
         for item in tabela.get_children():
