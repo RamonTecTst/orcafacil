@@ -8,6 +8,7 @@ from dados import (
     criar_banco,
     salvar_orcamento,
 )
+from historico import buscar_orcamento, listar_orcamentos
 from pdf import gerar_pdf
 
 
@@ -35,9 +36,33 @@ class OrcaFacilApp:
         ttk.Label(
             self.root,
             text="Gerador simples de orçamentos",
-        ).pack(pady=(0, 15))
+        ).pack(pady=(0, 10))
 
-        dados = ttk.LabelFrame(self.root, text="Dados do cliente")
+        navegacao = ttk.Frame(self.root)
+        navegacao.pack(fill="x", padx=20, pady=(0, 8))
+
+        ttk.Button(
+            navegacao,
+            text="Novo orçamento",
+            command=self.mostrar_novo_orcamento,
+        ).pack(side="left")
+
+        ttk.Button(
+            navegacao,
+            text="Histórico",
+            command=self.abrir_historico,
+        ).pack(side="left", padx=8)
+
+        self.conteudo = ttk.Frame(self.root)
+        self.conteudo.pack(fill="both", expand=True)
+
+        self.montar_formulario()
+
+    def montar_formulario(self):
+        for widget in self.conteudo.winfo_children():
+            widget.destroy()
+
+        dados = ttk.LabelFrame(self.conteudo, text="Dados do cliente")
         dados.pack(fill="x", padx=20, pady=5)
 
         ttk.Label(dados, text="Cliente:").grid(
@@ -54,7 +79,7 @@ class OrcaFacilApp:
 
         dados.columnconfigure(1, weight=1)
 
-        servico = ttk.LabelFrame(self.root, text="Adicionar item")
+        servico = ttk.LabelFrame(self.conteudo, text="Adicionar item")
         servico.pack(fill="x", padx=20, pady=10)
 
         ttk.Label(servico, text="Descrição:").grid(
@@ -89,8 +114,16 @@ class OrcaFacilApp:
             row=0, column=4, padx=10, pady=10
         )
 
-        tabela_frame = ttk.LabelFrame(self.root, text="Itens do orçamento")
-        tabela_frame.pack(fill="both", expand=True, padx=20, pady=5)
+        tabela_frame = ttk.LabelFrame(
+            self.conteudo,
+            text="Itens do orçamento",
+        )
+        tabela_frame.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=5,
+        )
 
         self.tabela = ttk.Treeview(
             tabela_frame,
@@ -111,7 +144,7 @@ class OrcaFacilApp:
 
         self.tabela.pack(fill="both", expand=True, padx=8, pady=8)
 
-        rodape = ttk.Frame(self.root)
+        rodape = ttk.Frame(self.conteudo)
         rodape.pack(fill="x", padx=20, pady=10)
 
         self.total_label = ttk.Label(
@@ -126,6 +159,205 @@ class OrcaFacilApp:
             text="Gerar orçamento PDF",
             command=self.gerar_orcamento,
         ).pack(side="right")
+
+    def mostrar_novo_orcamento(self):
+        self.montar_formulario()
+
+    def abrir_historico(self):
+        janela = tk.Toplevel(self.root)
+        janela.title("Histórico de Orçamentos")
+        janela.geometry("720x430")
+        janela.minsize(650, 380)
+
+        ttk.Label(
+            janela,
+            text="Histórico de Orçamentos",
+            font=("TkDefaultFont", 16, "bold"),
+        ).pack(pady=(15, 10))
+
+        tabela = ttk.Treeview(
+            janela,
+            columns=("numero", "cliente", "data", "total", "status"),
+            show="headings",
+            height=14,
+        )
+
+        for coluna, titulo in (
+            ("numero", "Nº"),
+            ("cliente", "Cliente"),
+            ("data", "Data"),
+            ("total", "Total"),
+            ("status", "Status"),
+        ):
+            tabela.heading(coluna, text=titulo)
+
+        tabela.column("numero", width=60, anchor="center")
+        tabela.column("cliente", width=260)
+        tabela.column("data", width=100)
+        tabela.column("total", width=110, anchor="e")
+        tabela.column("status", width=100, anchor="center")
+
+        tabela.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=10,
+        )
+
+        for numero, cliente, data, total, status in listar_orcamentos():
+            data_exibicao = data
+            if len(data) == 10 and data[4] == "-" and data[7] == "-":
+                data_exibicao = f"{data[8:10]}/{data[5:7]}/{data[:4]}"
+
+            tabela.insert(
+                "",
+                "end",
+                iid=str(numero),
+                values=(
+                    numero,
+                    cliente,
+                    data_exibicao,
+                    f"R$ {total:.2f}".replace(".", ","),
+                    status,
+                ),
+            )
+
+        botoes = ttk.Frame(janela)
+        botoes.pack(fill="x", padx=20, pady=(0, 15))
+
+        ttk.Button(
+            botoes,
+            text="Ver detalhes",
+            command=lambda: self.ver_detalhes(tabela),
+        ).pack(side="left")
+
+        ttk.Button(
+            botoes,
+            text="Atualizar",
+            command=lambda: self.atualizar_historico(
+                tabela
+            ),
+        ).pack(side="left", padx=8)
+
+    def atualizar_historico(self, tabela):
+        for item in tabela.get_children():
+            tabela.delete(item)
+
+        for numero, cliente, data, total, status in listar_orcamentos():
+            data_exibicao = data
+            if len(data) == 10 and data[4] == "-" and data[7] == "-":
+                data_exibicao = f"{data[8:10]}/{data[5:7]}/{data[:4]}"
+
+            tabela.insert(
+                "",
+                "end",
+                iid=str(numero),
+                values=(
+                    numero,
+                    cliente,
+                    data_exibicao,
+                    f"R$ {total:.2f}".replace(".", ","),
+                    status,
+                ),
+            )
+
+    def ver_detalhes(self, tabela):
+        selecionado = tabela.selection()
+
+        if not selecionado:
+            messagebox.showwarning(
+                "Atenção",
+                "Selecione um orçamento.",
+            )
+            return
+
+        numero = int(selecionado[0])
+        resultado = buscar_orcamento(numero)
+
+        if not resultado:
+            messagebox.showerror(
+                "Erro",
+                "Orçamento não encontrado.",
+            )
+            return
+
+        orcamento, itens = resultado
+        (
+            numero,
+            cliente,
+            data,
+            validade,
+            status,
+            observacoes,
+            total,
+            pdf,
+        ) = orcamento
+
+        detalhes = tk.Toplevel(self.root)
+        detalhes.title(f"Orçamento #{numero}")
+        detalhes.geometry("620x400")
+
+        ttk.Label(
+            detalhes,
+            text=f"Orçamento #{numero}",
+            font=("TkDefaultFont", 16, "bold"),
+        ).pack(pady=(15, 5))
+
+        ttk.Label(
+            detalhes,
+            text=f"Cliente: {cliente} | Data: {data}",
+        ).pack()
+
+        tabela_itens = ttk.Treeview(
+            detalhes,
+            columns=("descricao", "quantidade", "unitario", "subtotal"),
+            show="headings",
+            height=10,
+        )
+
+        for coluna, titulo in (
+            ("descricao", "Descrição"),
+            ("quantidade", "Qtd."),
+            ("unitario", "Unitário"),
+            ("subtotal", "Subtotal"),
+        ):
+            tabela_itens.heading(coluna, text=titulo)
+
+        tabela_itens.column("descricao", width=280)
+        tabela_itens.column("quantidade", width=70, anchor="center")
+        tabela_itens.column("unitario", width=100, anchor="e")
+        tabela_itens.column("subtotal", width=100, anchor="e")
+
+        tabela_itens.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=12,
+        )
+
+        for descricao, quantidade, unitario, subtotal in itens:
+            tabela_itens.insert(
+                "",
+                "end",
+                values=(
+                    descricao,
+                    quantidade,
+                    f"R$ {unitario:.2f}".replace(".", ","),
+                    f"R$ {subtotal:.2f}".replace(".", ","),
+                ),
+            )
+
+        ttk.Label(
+            detalhes,
+            text=f"Total: R$ {total:.2f}".replace(".", ","),
+            font=("TkDefaultFont", 13, "bold"),
+        ).pack(pady=(0, 10))
+
+        ttk.Button(
+            detalhes,
+            text="Fechar",
+            command=detalhes.destroy,
+        ).pack(pady=(0, 12))
 
     def adicionar_item(self):
         descricao = self.servico_var.get().strip()
