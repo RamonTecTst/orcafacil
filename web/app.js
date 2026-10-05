@@ -21,23 +21,6 @@ function numeroBR(valor) {
   return Number(texto);
 }
 
-function carregarJsPDF() {
-  if (window.jspdf) return Promise.resolve(true);
-
-  return new Promise(resolve => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
-    script.onload = () => resolve(!!window.jspdf);
-    script.onerror = () => resolve(false);
-    document.head.appendChild(script);
-  });
-}
-function proximoNumero() { return state.orcamentos.length ? Math.max(...state.orcamentos.map(o => o.numero)) + 1 : 1; }
-function hoje() { return new Date().toLocaleDateString("pt-BR"); }
-function esc(texto) {
-  return String(texto).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-}
-
 function renderItens() {
   const lista = $("itensLista");
   if (!state.itens.length) {
@@ -85,7 +68,7 @@ function limparFormulario() {
   renderItens();
 }
 
-async function criarOrcamento() {
+function criarOrcamento() {
   const cliente = $("cliente").value.trim();
   const telefone = $("telefone").value.trim();
   const validade = Number($("validade").value);
@@ -102,77 +85,37 @@ async function criarOrcamento() {
 
   state.orcamentos.unshift(orcamento);
   salvarOrcamentos();
-  const pdfDisponivel = await carregarJsPDF();
-  if (pdfDisponivel) {
-    gerarPDF(orcamento);
-  } else {
-    alert("O orçamento foi salvo, mas o PDF não pôde ser carregado. Tente novamente com internet ativa.");
-  }
+  gerarPDF(orcamento);
   renderHistorico();
   limparFormulario();
 }
 
 function gerarPDF(orcamento) {
-  if (!window.jspdf) return alert("A biblioteca de PDF ainda não carregou. Verifique a internet e tente novamente.");
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y = 20;
+  const area = $("printArea");
 
-  doc.setFontSize(20);
-  doc.setFont(undefined,"bold");
-  doc.text("ORCAFACIL",20,y);
-  y += 9;
-  doc.setFontSize(10);
-  doc.setFont(undefined,"normal");
-  doc.text("Orcamento #" + orcamento.numero,20,y);
-  doc.text("Data: " + orcamento.data,140,y);
+  const linhas = orcamento.itens.map(item =>
+    '<tr>' +
+      '<td>' + esc(item.descricao) + '</td>' +
+      '<td>' + item.quantidade + ' × ' + moeda(item.valorUnitario) + '</td>' +
+      '<td>' + moeda(item.subtotal) + '</td>' +
+    '</tr>'
+  ).join("");
 
-  y += 14;
-  doc.setFontSize(12);
-  doc.setFont(undefined,"bold");
-  doc.text("Cliente",20,y);
-  y += 7;
-  doc.setFont(undefined,"normal");
-  doc.text(orcamento.cliente,20,y);
-  if (orcamento.telefone) { y += 6; doc.text("Telefone: " + orcamento.telefone,20,y); }
+  area.innerHTML =
+    '<h1>ORÇAFÁCIL</h1>' +
+    '<div class="print-muted">Orçamento #' + orcamento.numero + ' · Data: ' + orcamento.data + '</div>' +
+    '<div class="print-client">' +
+      '<strong>Cliente:</strong> ' + esc(orcamento.cliente) +
+      (orcamento.telefone ? '<br><span class="print-muted">Telefone: ' + esc(orcamento.telefone) + '</span>' : '') +
+    '</div>' +
+    '<table><thead><tr><th>Descrição</th><th>Quantidade / Unitário</th><th>Subtotal</th></tr></thead>' +
+    '<tbody>' + linhas + '</tbody></table>' +
+    '<div class="print-total">TOTAL: ' + moeda(orcamento.total) + '</div>' +
+    '<div class="print-muted" style="margin-top:8px">Validade: ' + orcamento.validade + ' dias</div>' +
+    (orcamento.observacoes ? '<div class="print-notes"><strong>Observações:</strong>\n' + esc(orcamento.observacoes) + '</div>' : '') +
+    '<div class="print-muted" style="margin-top:30px">Gerado pelo OrçaFácil</div>';
 
-  y += 13;
-  doc.setFont(undefined,"bold");
-  doc.text("Itens",20,y);
-  y += 7;
-  doc.setFontSize(10);
-
-  orcamento.itens.forEach(item => {
-    if (y > 270) { doc.addPage(); y = 20; }
-    doc.setFont(undefined,"normal");
-    const descricao = item.descricao.length > 65 ? item.descricao.slice(0,62) + "..." : item.descricao;
-    doc.text(descricao,20,y);
-    doc.text(item.quantidade + " x " + moeda(item.valorUnitario),120,y);
-    doc.text(moeda(item.subtotal),170,y);
-    y += 7;
-  });
-
-  y += 5;
-  doc.setFontSize(13);
-  doc.setFont(undefined,"bold");
-  doc.text("TOTAL: " + moeda(orcamento.total),120,y);
-  y += 12;
-  doc.setFontSize(10);
-  doc.setFont(undefined,"normal");
-  doc.text("Validade: " + orcamento.validade + " dias",20,y);
-
-  if (orcamento.observacoes) {
-    y += 8;
-    doc.setFont(undefined,"bold");
-    doc.text("Observacoes:",20,y);
-    y += 6;
-    doc.setFont(undefined,"normal");
-    doc.text(doc.splitTextToSize(orcamento.observacoes,170),20,y);
-  }
-
-  doc.setFontSize(8);
-  doc.text("Gerado pelo OrçaFácil",20,285);
-  doc.save("orcamento_" + orcamento.numero + ".pdf");
+  window.print();
 }
 
 function renderHistorico() {
