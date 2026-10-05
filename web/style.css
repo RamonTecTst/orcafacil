@@ -49,3 +49,25 @@ button { border: 0; border-radius: 11px; padding: 11px 14px; font-weight: 800; c
 .bottom-nav .nav-active { color: #111827; font-weight: 900; }
 .hidden { display: none !important; }
 @media (min-width: 700px) { body { padding-bottom: 0; } .bottom-nav { display: none; } .container { padding-top: 24px; } }
+
+@media print {
+  body { background: white; padding: 0; }
+  body > * { display: none !important; }
+  #printArea {
+    display: block !important;
+    width: 100%;
+    padding: 10mm 12mm;
+    color: #111827;
+    font-family: Arial, sans-serif;
+  }
+  #printArea h1 { margin: 0 0 4px; font-size: 24px; }
+  #printArea .print-muted { color: #6b7280; font-size: 11px; }
+  #printArea .print-client { margin: 20px 0 14px; }
+  #printArea table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  #printArea th, #printArea td { text-align: left; padding: 8px 4px; border-bottom: 1px solid #ddd; font-size: 11px; }
+  #printArea th:last-child, #printArea td:last-child { text-align: right; }
+  #printArea .print-total { text-align: right; font-size: 16px; font-weight: 800; margin-top: 14px; }
+  #printArea .print-notes { margin-top: 18px; white-space: pre-wrap; font-size: 11px; }
+}
+
+#printArea { display: none; }
