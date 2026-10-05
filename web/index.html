@@ -13,7 +13,7 @@
       <h1>OrçaFácil</h1>
       <p>Orçamentos rápidos pelo celular</p>
     </div>
-    <button id="novoBtn" class="secondary">Novo</button>
+    <div class="top-actions"><button id="empresaBtn" class="secondary">Empresa</button><button id="novoBtn" class="secondary">Novo</button></div>
   </header>
 
   <main class="container">
@@ -27,8 +27,22 @@
           <span id="numeroPreview" class="badge">#1</span>
         </div>
 
+        <label>Título do orçamento
+          <input id="titulo" type="text" placeholder="Ex.: Manutenção do computador">
+        </label>
         <label>Nome do cliente
           <input id="cliente" type="text" placeholder="Ex.: João da Silva" autocomplete="name">
+        </label>
+        <div class="grid-2">
+          <label>Telefone
+            <input id="telefone" type="tel" placeholder="(75) 99999-9999" autocomplete="tel">
+          </label>
+          <label>E-mail
+            <input id="emailCliente" type="email" placeholder="cliente@email.com" autocomplete="email">
+          </label>
+        </div>
+        <label>Endereço
+          <input id="enderecoCliente" type="text" placeholder="Rua, número, bairro, cidade - UF" autocomplete="street-address">
         </label>
 
         <div class="grid-2">
@@ -80,12 +94,49 @@
       </div>
 
       <div class="card">
+        <label>Forma de pagamento
+          <input id="pagamento" type="text" placeholder="Ex.: 50% na aprovação e 50% na entrega">
+        </label>
+        <label>Prazo de execução
+          <input id="prazo" type="text" placeholder="Ex.: Até 5 dias úteis">
+        </label>
+        <label>Garantia
+          <input id="garantia" type="text" placeholder="Ex.: 90 dias para mão de obra">
+        </label>
         <label>Observações
           <textarea id="observacoes" rows="3" placeholder="Prazo, forma de pagamento, garantia..."></textarea>
         </label>
       </div>
 
       <button id="gerarBtn" class="primary full big">Gerar orçamento em PDF</button>
+    </section>
+
+    <section id="empresaView" class="view hidden">
+      <div class="page-title">
+        <div><span class="eyebrow">CONFIGURAÇÃO</span><h2>Dados da empresa</h2></div>
+        <button id="fecharEmpresaBtn" class="secondary">Voltar</button>
+      </div>
+      <div class="card">
+        <p class="form-help">Cadastre uma vez. Esses dados aparecem automaticamente nos próximos PDFs.</p>
+        <label>Nome da empresa / profissional
+          <input id="empresaNome" type="text" placeholder="Ex.: João Serviços">
+        </label>
+        <label>CPF ou CNPJ
+          <input id="empresaDocumento" type="text" placeholder="Opcional">
+        </label>
+        <div class="grid-2">
+          <label>Telefone / WhatsApp
+            <input id="empresaTelefone" type="tel" placeholder="(75) 99999-9999">
+          </label>
+          <label>E-mail
+            <input id="empresaEmail" type="email" placeholder="contato@empresa.com">
+          </label>
+        </div>
+        <label>Endereço
+          <input id="empresaEndereco" type="text" placeholder="Rua, número, bairro, cidade - UF">
+        </label>
+        <button id="salvarEmpresaBtn" class="primary full">Salvar dados da empresa</button>
+      </div>
     </section>
 
     <section id="historicoView" class="view hidden">
@@ -103,10 +154,11 @@
   <section id="printArea" aria-hidden="true"></section>
 
   <nav class="bottom-nav">
+    <button id="navEmpresa">Empresa</button>
     <button id="navNovo" class="nav-active">Novo orçamento</button>
     <button id="navHistorico">Histórico</button>
   </nav>
 
-  <script src="app.js?v=20261005-3"></script>
+  <script src="app.js?v=20261005-4"></script>
 </body>
 </html>
