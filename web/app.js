@@ -21,6 +21,25 @@ function numeroBR(valor) {
   return Number(texto);
 }
 
+function proximoNumero() {
+  return state.orcamentos.length
+    ? Math.max(...state.orcamentos.map(o => o.numero)) + 1
+    : 1;
+}
+
+function hoje() {
+  return new Date().toLocaleDateString("pt-BR");
+}
+
+function esc(texto) {
+  return String(texto)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function renderItens() {
   const lista = $("itensLista");
   if (!state.itens.length) {
