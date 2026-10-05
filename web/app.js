@@ -127,6 +127,19 @@ document.addEventListener("DOMContentLoaded", () => {
     renderItens();
   }
 
+  function nomeArquivoPDF(orcamento) {
+    const nomeCliente = String(orcamento.cliente)
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+    const dataArquivo = orcamento.data.replace(/\\//g, "-");
+    const numero = String(orcamento.numero).padStart(3, "0");
+
+    return "Orcamento_" + numero + "_" + (nomeCliente || "Cliente") + "_" + dataArquivo;
+  }
+
   function gerarPDF(orcamento) {
     const area = $("printArea");
 
@@ -168,7 +181,13 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="print-muted" style="margin-top:30px">Gerado pelo OrçaFácil</div>
     `;
 
+    const tituloAnterior = document.title;
+    document.title = nomeArquivoPDF(orcamento);
     window.print();
+
+    setTimeout(() => {
+      document.title = tituloAnterior;
+    }, 1000);
   }
 
   function criarOrcamento() {
