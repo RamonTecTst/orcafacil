@@ -9,6 +9,8 @@
 body { margin: 0; padding-bottom: 78px; background: #f3f4f6; }
 button, input, select, textarea { font: inherit; }
 .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; color: white; background: #111827; }
+.top-actions { display:flex; gap:6px; }
+.top-actions button { padding:9px 10px; font-size:12px; }
 .topbar h1 { margin: 0; font-size: 23px; }
 .topbar p { margin: 2px 0 0; color: #cbd5e1; font-size: 13px; }
 .container { width: min(720px, 100%); margin: 0 auto; padding: 14px; }
@@ -34,6 +36,7 @@ button { border: 0; border-radius: 11px; padding: 11px 14px; font-weight: 800; c
 .item-meta { color: #6b7280; font-size: 12px; margin-top: 3px; }
 .item-price { font-weight: 800; white-space: nowrap; }
 .item-remove { padding: 7px 9px; font-size: 12px; margin-top: 6px; }
+.form-help { margin:-4px 0 16px; color:#6b7280; font-size:13px; }
 .empty { padding: 18px 4px; text-align: center; color: #9ca3af; font-size: 13px; }
 .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 14px; border-top: 1px solid #e5e7eb; font-size: 16px; }
 .total-row strong { font-size: 21px; }
@@ -44,7 +47,7 @@ button { border: 0; border-radius: 11px; padding: 11px 14px; font-weight: 800; c
 .history-total { font-weight: 900; }
 .history-actions { display: flex; gap: 7px; margin-top: 12px; }
 .history-actions button { flex: 1; font-size: 12px; }
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; display: grid; grid-template-columns: 1fr 1fr; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: white; border-top: 1px solid #e5e7eb; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: white; border-top: 1px solid #e5e7eb; }
 .bottom-nav button { background: transparent; color: #6b7280; }
 .bottom-nav .nav-active { color: #111827; font-weight: 900; }
 .hidden { display: none !important; }
