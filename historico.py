@@ -58,3 +58,11 @@ def buscar_orcamento(orcamento_id):
         ).fetchall()
 
         return orcamento, itens
+
+
+def atualizar_pdf(orcamento_id, caminho):
+    with conectar() as conn:
+        conn.execute(
+            "UPDATE orcamentos SET pdf = ? WHERE id = ?",
+            (caminho, orcamento_id),
+        )
