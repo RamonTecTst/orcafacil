@@ -8,6 +8,30 @@ function carregarOrcamentos() {
 }
 function salvarOrcamentos() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.orcamentos)); }
 function moeda(valor) { return new Intl.NumberFormat("pt-BR", {style:"currency",currency:"BRL"}).format(valor); }
+
+function numeroBR(valor) {
+  const texto = String(valor).trim().replace(/\s/g, "");
+  if (!texto) return NaN;
+
+  // Aceita 150,50 e também 1.250,50.
+  if (texto.includes(",")) {
+    return Number(texto.replace(/\./g, "").replace(",", "."));
+  }
+
+  return Number(texto);
+}
+
+function carregarJsPDF() {
+  if (window.jspdf) return Promise.resolve(true);
+
+  return new Promise(resolve => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
+    script.onload = () => resolve(!!window.jspdf);
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+}
 function proximoNumero() { return state.orcamentos.length ? Math.max(...state.orcamentos.map(o => o.numero)) + 1 : 1; }
 function hoje() { return new Date().toLocaleDateString("pt-BR"); }
 function esc(texto) {
@@ -31,8 +55,8 @@ function renderItens() {
 
 function adicionarItem() {
   const descricao = $("descricao").value.trim();
-  const quantidade = Number($("quantidade").value);
-  const valorUnitario = Number($("valor").value);
+  const quantidade = numeroBR($("quantidade").value);
+  const valorUnitario = numeroBR($("valor").value);
 
   if (!descricao) return alert("Digite a descrição do serviço.");
   if (!quantidade || quantidade <= 0 || Number.isNaN(quantidade)) return alert("Digite uma quantidade válida.");
@@ -61,7 +85,7 @@ function limparFormulario() {
   renderItens();
 }
 
-function criarOrcamento() {
+async function criarOrcamento() {
   const cliente = $("cliente").value.trim();
   const telefone = $("telefone").value.trim();
   const validade = Number($("validade").value);
@@ -78,7 +102,12 @@ function criarOrcamento() {
 
   state.orcamentos.unshift(orcamento);
   salvarOrcamentos();
-  gerarPDF(orcamento);
+  const pdfDisponivel = await carregarJsPDF();
+  if (pdfDisponivel) {
+    gerarPDF(orcamento);
+  } else {
+    alert("O orçamento foi salvo, mas o PDF não pôde ser carregado. Tente novamente com internet ativa.");
+  }
   renderHistorico();
   limparFormulario();
 }
