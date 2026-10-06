@@ -8,6 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let orcamentos = carregarOrcamentos();
   let empresa = carregarEmpresa();
 
+  const config = window.ORCAFACIL_CONFIG;
+  const supabaseClient = (config?.SUPABASE_URL && config?.SUPABASE_ANON_KEY && window.supabase)
+    ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+    : null;
+
   function carregarOrcamentos() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     catch (erro) { return []; }
@@ -102,6 +107,12 @@ document.addEventListener("DOMContentLoaded", () => {
     $("quantidade").value = "1";
     $("validade").value = "7";
     $("numeroPreview").textContent = "#" + proximoNumero();
+
+  if (supabaseClient) {
+    supabaseClient.auth.getSession().then(({ data }) => {
+      $("loginBtnTop").textContent = data.session ? "Sair" : "Entrar";
+    });
+  }
     renderItens();
   }
 
@@ -204,6 +215,23 @@ document.addEventListener("DOMContentLoaded", () => {
     $("navEmpresa").classList.toggle("nav-active", view === "empresa");
     if (view === "historico") renderHistorico();
   }
+
+  $("loginBtnTop").addEventListener("click", async () => {
+    if (!supabaseClient) {
+      window.location.href = "auth.html";
+      return;
+    }
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session) {
+      if (confirm("Você já está conectado. Deseja sair?")) {
+        await supabaseClient.auth.signOut();
+        $("loginBtnTop").textContent = "Entrar";
+        alert("Sessão encerrada.");
+      }
+    } else {
+      window.location.href = "auth.html";
+    }
+  });
 
   $("empresaBtn").addEventListener("click", () => { preencherEmpresa(); mostrar("empresa"); });
   $("fecharEmpresaBtn").addEventListener("click", () => mostrar("form"));
