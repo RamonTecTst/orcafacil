@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>Entrar — OrçaFácil</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="auth-card card">
+      <div class="auth-brand">
+        <span class="eyebrow">ORÇAFÁCIL</span>
+        <h1>Seu negócio, seus orçamentos.</h1>
+        <p>Entre para salvar seus dados na nuvem e acessar seus orçamentos em qualquer dispositivo.</p>
+      </div>
+
+      <div id="authStatus" class="form-help"></div>
+
+      <form id="authForm">
+        <label>E-mail
+          <input id="authEmail" type="email" autocomplete="email" required placeholder="voce@email.com">
+        </label>
+        <label>Senha
+          <input id="authPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Mínimo de 6 caracteres">
+        </label>
+        <button id="loginBtn" class="primary full" type="submit">Entrar</button>
+        <button id="signupBtn" class="secondary full" type="button">Criar conta</button>
+      </form>
+
+      <a class="auth-back" href="index.html">Continuar no modo local</a>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js?v=20261006-1"></script>
+</body>
+</html>
