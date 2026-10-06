@@ -82,7 +82,15 @@ create policy "clientes_dono_all" on public.clientes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "orcamentos_dono_all" on public.orcamentos
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for all
+  using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.clientes c
+      where c.id = cliente_id and c.user_id = auth.uid()
+    )
+  );
 
 create policy "itens_via_orcamento_dono" on public.itens_orcamento
   for all
@@ -102,3 +110,30 @@ create policy "itens_via_orcamento_dono" on public.itens_orcamento
 -- Próximo passo: criar tabela de assinaturas depois que o provedor
 -- de cobrança for escolhido. O status da assinatura deverá ser
 -- atualizado por webhook no backend, nunca pelo navegador.
+
+
+-- Atualização automática do timestamp.
+create or replace function public.atualizar_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists empresas_updated_at on public.empresas;
+create trigger empresas_updated_at
+before update on public.empresas
+for each row execute function public.atualizar_updated_at();
+
+drop trigger if exists clientes_updated_at on public.clientes;
+create trigger clientes_updated_at
+before update on public.clientes
+for each row execute function public.atualizar_updated_at();
+
+drop trigger if exists orcamentos_updated_at on public.orcamentos;
+create trigger orcamentos_updated_at
+before update on public.orcamentos
+for each row execute function public.atualizar_updated_at();
