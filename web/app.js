@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         prazo: orcamento.prazo || null,
         garantia: orcamento.garantia || null,
         observacoes: orcamento.observacoes || null,
-        status: "emitido",
+        status: "enviado",
         total: orcamento.total
       })
       .select("id")
