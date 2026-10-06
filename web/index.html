@@ -20,10 +20,7 @@
     <section id="formView" class="view">
       <div class="card">
         <div class="section-title">
-          <div>
-            <span class="eyebrow">NOVO ORÇAMENTO</span>
-            <h2>Dados do cliente</h2>
-          </div>
+          <div><span class="eyebrow">NOVO ORÇAMENTO</span><h2>Dados do cliente</h2></div>
           <span id="numeroPreview" class="badge">#1</span>
         </div>
 
@@ -44,30 +41,20 @@
         <label>Endereço
           <input id="enderecoCliente" type="text" placeholder="Rua, número, bairro, cidade - UF" autocomplete="street-address">
         </label>
-
-        <div class="grid-2">
-          <label>Telefone
-            <input id="telefone" type="tel" placeholder="(75) 99999-9999" autocomplete="tel">
-          </label>
-          <label>Validade
-            <select id="validade">
-              <option value="7">7 dias</option>
-              <option value="10">10 dias</option>
-              <option value="15">15 dias</option>
-              <option value="30">30 dias</option>
-            </select>
-          </label>
-        </div>
+        <label>Validade
+          <select id="validade">
+            <option value="7">7 dias</option>
+            <option value="10">10 dias</option>
+            <option value="15">15 dias</option>
+            <option value="30">30 dias</option>
+          </select>
+        </label>
       </div>
 
       <div class="card">
         <div class="section-title">
-          <div>
-            <span class="eyebrow">ITENS</span>
-            <h2>O que será feito?</h2>
-          </div>
+          <div><span class="eyebrow">ITENS</span><h2>O que será feito?</h2></div>
         </div>
-
         <div class="item-form">
           <label>Descrição
             <input id="descricao" type="text" placeholder="Ex.: Manutenção do computador">
@@ -82,15 +69,8 @@
           </div>
           <button id="adicionarBtn" class="primary full">+ Adicionar item</button>
         </div>
-
-        <div id="itensLista" class="items-list">
-          <div class="empty">Nenhum item adicionado.</div>
-        </div>
-
-        <div class="total-row">
-          <span>Total</span>
-          <strong id="total">R$ 0,00</strong>
-        </div>
+        <div id="itensLista" class="items-list"><div class="empty">Nenhum item adicionado.</div></div>
+        <div class="total-row"><span>Total</span><strong id="total">R$ 0,00</strong></div>
       </div>
 
       <div class="card">
@@ -141,10 +121,7 @@
 
     <section id="historicoView" class="view hidden">
       <div class="page-title">
-        <div>
-          <span class="eyebrow">HISTÓRICO</span>
-          <h2>Meus orçamentos</h2>
-        </div>
+        <div><span class="eyebrow">HISTÓRICO</span><h2>Meus orçamentos</h2></div>
         <button id="voltarBtn" class="secondary">Novo orçamento</button>
       </div>
       <div id="historicoLista"></div>
@@ -159,6 +136,6 @@
     <button id="navHistorico">Histórico</button>
   </nav>
 
-  <script src="app.js?v=20261005-4"></script>
+  <script src="app.js?v=20261006-1"></script>
 </body>
 </html>
