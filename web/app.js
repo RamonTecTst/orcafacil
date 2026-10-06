@@ -13,6 +13,189 @@ document.addEventListener("DOMContentLoaded", () => {
     ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
     : null;
 
+  let sessaoOnline = null;
+  let modoOnline = false;
+
+  async function iniciarNuvem() {
+    if (!supabaseClient) return false;
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error || !data.session) return false;
+    sessaoOnline = data.session;
+    modoOnline = true;
+    $("loginBtnTop").textContent = "Sair";
+    await carregarDadosNuvem();
+    return true;
+  }
+
+  async function carregarDadosNuvem() {
+    const userId = sessaoOnline.user.id;
+
+    const [{ data: empresaData, error: empresaError },
+           { data: clientesData, error: clientesError },
+           { data: orcamentosData, error: orcamentosError }] = await Promise.all([
+      supabaseClient.from("empresas").select("*").eq("user_id", userId).maybeSingle(),
+      supabaseClient.from("clientes").select("*").eq("user_id", userId).order("nome"),
+      supabaseClient.from("orcamentos").select("*, clientes(nome, telefone, email, endereco), itens_orcamento(*)").eq("user_id", userId).order("numero", { ascending: false })
+    ]);
+
+    if (empresaError || clientesError || orcamentosError) {
+      console.error(empresaError || clientesError || orcamentosError);
+      alert("Não foi possível carregar seus dados online. O modo local continuará disponível.");
+      modoOnline = false;
+      return;
+    }
+
+    empresa = empresaData ? {
+      nome: empresaData.nome,
+      documento: empresaData.documento || "",
+      telefone: empresaData.telefone || "",
+      email: empresaData.email || "",
+      endereco: empresaData.endereco || ""
+    } : {};
+
+    orcamentos = (orcamentosData || []).map(o => ({
+      numero: o.numero,
+      titulo: o.titulo || "",
+      cliente: o.clientes?.nome || "Cliente",
+      telefone: o.clientes?.telefone || "",
+      email: o.clientes?.email || "",
+      endereco: o.clientes?.endereco || "",
+      validade: o.validade_dias,
+      pagamento: o.pagamento || "",
+      prazo: o.prazo || "",
+      garantia: o.garantia || "",
+      observacoes: o.observacoes || "",
+      data: new Date(o.created_at).toLocaleDateString("pt-BR"),
+      itens: (o.itens_orcamento || []).map(i => ({
+        descricao: i.descricao,
+        quantidade: Number(i.quantidade),
+        valorUnitario: Number(i.valor_unitario),
+        subtotal: Number(i.subtotal)
+      })),
+      total: Number(o.total)
+    }));
+
+    preencherEmpresa();
+    $("numeroPreview").textContent = "#" + proximoNumero();
+    renderHistorico();
+  }
+
+  async function salvarEmpresaNuvem() {
+    const payload = {
+      user_id: sessaoOnline.user.id,
+      nome: empresa.nome,
+      documento: empresa.documento || null,
+      telefone: empresa.telefone || null,
+      email: empresa.email || null,
+      endereco: empresa.endereco || null
+    };
+
+    const { error } = await supabaseClient
+      .from("empresas")
+      .upsert(payload, { onConflict: "user_id" });
+
+    if (error) throw error;
+  }
+
+  async function buscarOuCriarClienteNuvem(orcamento) {
+    const userId = sessaoOnline.user.id;
+    const { data: existentes, error: buscaError } = await supabaseClient
+      .from("clientes")
+      .select("id,nome,telefone,email,endereco")
+      .eq("user_id", userId)
+      .ilike("nome", orcamento.cliente)
+      .limit(1);
+
+    if (buscaError) throw buscaError;
+    if (existentes?.length) {
+      const cliente = existentes[0];
+      const { data: atualizado, error: updateError } = await supabaseClient
+        .from("clientes")
+        .update({
+          telefone: orcamento.telefone || null,
+          email: orcamento.email || null,
+          endereco: orcamento.endereco || null
+        })
+        .eq("id", cliente.id)
+        .select("id")
+        .single();
+      if (updateError) throw updateError;
+      return atualizado.id;
+    }
+
+    const { data: novo, error } = await supabaseClient
+      .from("clientes")
+      .insert({
+        user_id: userId,
+        nome: orcamento.cliente,
+        telefone: orcamento.telefone || null,
+        email: orcamento.email || null,
+        endereco: orcamento.endereco || null
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+    return novo.id;
+  }
+
+  async function salvarOrcamentoNuvem(orcamento) {
+    const clienteId = await buscarOuCriarClienteNuvem(orcamento);
+
+    const { data: novoOrcamento, error: orcamentoError } = await supabaseClient
+      .from("orcamentos")
+      .insert({
+        user_id: sessaoOnline.user.id,
+        cliente_id: clienteId,
+        numero: orcamento.numero,
+        titulo: orcamento.titulo || null,
+        validade_dias: orcamento.validade,
+        pagamento: orcamento.pagamento || null,
+        prazo: orcamento.prazo || null,
+        garantia: orcamento.garantia || null,
+        observacoes: orcamento.observacoes || null,
+        status: "emitido",
+        total: orcamento.total
+      })
+      .select("id")
+      .single();
+
+    if (orcamentoError) throw orcamentoError;
+
+    const linhas = orcamento.itens.map(item => ({
+      orcamento_id: novoOrcamento.id,
+      descricao: item.descricao,
+      quantidade: item.quantidade,
+      valor_unitario: item.valorUnitario,
+      subtotal: item.subtotal
+    }));
+
+    const { error: itensError } = await supabaseClient
+      .from("itens_orcamento")
+      .insert(linhas);
+
+    if (itensError) throw itensError;
+  }
+
+  async function excluirOrcamentoNuvem(numero) {
+    const { data, error } = await supabaseClient
+      .from("orcamentos")
+      .select("id")
+      .eq("user_id", sessaoOnline.user.id)
+      .eq("numero", numero)
+      .single();
+
+    if (error) throw error;
+
+    const { error: deleteError } = await supabaseClient
+      .from("orcamentos")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", sessaoOnline.user.id);
+
+    if (deleteError) throw deleteError;
+  }
+
   function carregarOrcamentos() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     catch (erro) { return []; }
@@ -107,12 +290,6 @@ document.addEventListener("DOMContentLoaded", () => {
     $("quantidade").value = "1";
     $("validade").value = "7";
     $("numeroPreview").textContent = "#" + proximoNumero();
-
-  if (supabaseClient) {
-    supabaseClient.auth.getSession().then(({ data }) => {
-      $("loginBtnTop").textContent = data.session ? "Sair" : "Entrar";
-    });
-  }
     renderItens();
   }
 
@@ -152,7 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => document.title = tituloAnterior, 1000);
   }
 
-  function criarOrcamento() {
+  async function criarOrcamento() {
     const cliente = $("cliente").value.trim();
     if (!cliente) { alert("Digite o nome do cliente."); $("cliente").focus(); return; }
     if (!itens.length) { alert("Adicione pelo menos um item."); return; }
@@ -174,10 +351,29 @@ document.addEventListener("DOMContentLoaded", () => {
       total: itens.reduce((soma,item) => soma + item.subtotal, 0)
     };
 
-    orcamentos.unshift(orcamento);
-    salvarOrcamentos();
-    gerarPDF(orcamento);
-    renderHistorico();
+    const botao = $("gerarBtn");
+    botao.disabled = true;
+    botao.textContent = modoOnline ? "Salvando..." : "Gerando...";
+
+    try {
+      if (modoOnline) {
+        await salvarOrcamentoNuvem(orcamento);
+        await carregarDadosNuvem();
+      } else {
+        orcamentos.unshift(orcamento);
+        salvarOrcamentos();
+      }
+
+      gerarPDF(orcamento);
+      renderHistorico();
+      limparFormulario();
+    } catch (erro) {
+      console.error(erro);
+      alert("Não foi possível salvar o orçamento online. Nenhuma alteração local foi feita.");
+    } finally {
+      botao.disabled = false;
+      botao.textContent = "Gerar orçamento em PDF";
+    }
   }
 
   function renderHistorico() {
@@ -236,7 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("empresaBtn").addEventListener("click", () => { preencherEmpresa(); mostrar("empresa"); });
   $("fecharEmpresaBtn").addEventListener("click", () => mostrar("form"));
   $("navEmpresa").addEventListener("click", () => { preencherEmpresa(); mostrar("empresa"); });
-  $("salvarEmpresaBtn").addEventListener("click", () => {
+  $("salvarEmpresaBtn").addEventListener("click", async () => {
     const nome = $("empresaNome").value.trim();
     if (!nome) { alert("Digite o nome da empresa ou profissional."); $("empresaNome").focus(); return; }
     empresa = {
@@ -246,9 +442,16 @@ document.addEventListener("DOMContentLoaded", () => {
       email: $("empresaEmail").value.trim(),
       endereco: $("empresaEndereco").value.trim()
     };
-    salvarEmpresa();
-    alert("Dados da empresa salvos.");
-    mostrar("form");
+
+    try {
+      if (modoOnline) await salvarEmpresaNuvem();
+      salvarEmpresa();
+      alert(modoOnline ? "Dados da empresa salvos na nuvem." : "Dados da empresa salvos.");
+      mostrar("form");
+    } catch (erro) {
+      console.error(erro);
+      alert("Não foi possível salvar os dados da empresa online.");
+    }
   });
 
   $("adicionarBtn").addEventListener("click", adicionarItem);
@@ -283,9 +486,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (botao.dataset.action === "delete") {
       if (!confirm("Excluir o orçamento #" + orcamento.numero + "?")) return;
-      orcamentos = orcamentos.filter(o => Number(o.numero) !== Number(orcamento.numero));
-      salvarOrcamentos();
-      renderHistorico();
+      try {
+        if (modoOnline) {
+          await excluirOrcamentoNuvem(orcamento.numero);
+          await carregarDadosNuvem();
+        } else {
+          orcamentos = orcamentos.filter(o => Number(o.numero) !== Number(orcamento.numero));
+          salvarOrcamentos();
+        }
+        renderHistorico();
+      } catch (erro) {
+        console.error(erro);
+        alert("Não foi possível excluir o orçamento.");
+      }
     }
   });
 
@@ -294,4 +507,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("numeroPreview").textContent = "#" + proximoNumero();
   renderItens();
+
+  if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        sessaoOnline = session;
+        modoOnline = true;
+        $("loginBtnTop").textContent = "Sair";
+        await carregarDadosNuvem();
+      } else {
+        sessaoOnline = null;
+        modoOnline = false;
+        $("loginBtnTop").textContent = "Entrar";
+      }
+    });
+
+    iniciarNuvem().catch(erro => console.error("Falha ao iniciar modo online:", erro));
+  }
 });
