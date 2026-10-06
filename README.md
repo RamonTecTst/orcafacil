@@ -1,97 +1,132 @@
 # OrçaFácil
 
-Sistema de criação de orçamentos pensado para pequenos prestadores de serviço.
+SaaS mobile-first para criação, organização e envio de orçamentos para pequenos prestadores de serviço.
 
-## Direção atual
+## Objetivo do projeto
 
-O projeto desktop em Python/Tkinter foi congelado como protótipo. O desenvolvimento principal passa a ser **mobile-first**, para que o usuário consiga criar e enviar orçamentos pelo celular.
+A estratégia do OrçaFácil é **lançar rápido, validar com clientes pagantes e evoluir usando a receita do próprio produto**.
 
-## Protótipo Web Mobile
+O objetivo inicial não é construir uma plataforma gigante. O primeiro produto comercial precisa resolver muito bem:
 
-A primeira versão web fica em `web/`:
+**criar orçamento → gerar PDF → guardar histórico → compartilhar com o cliente → vender o serviço.**
 
-- Interface responsiva para celular e PC
-- Cadastro básico do cliente
-- Adição de vários itens
-- Quantidade e valor unitário
-- Cálculo automático do total
-- Validade do orçamento
-- Observações
-- Histórico de orçamentos
-- Visualização de detalhes
-- Exclusão de orçamento
-- Geração de PDF no navegador
-- Armazenamento local no navegador com `localStorage`
+## Estado atual
 
-### Teste
+O projeto desktop em Python/Tkinter foi congelado como protótipo.
 
-A interface web pode ser publicada pelo GitHub Pages. Depois de habilitar o Pages para a branch `main`, abra:
+O produto principal agora é o **web app mobile-first** em `web/`.
 
-`https://ramontecst.github.io/orcafacil/web/`
+O protótipo atual já possui:
 
-> Substitua o espaço do endereço por nada: `ramontectst.github.io`.
+- interface responsiva;
+- dados da empresa;
+- dados do cliente;
+- múltiplos itens;
+- quantidade e valor unitário;
+- cálculo automático;
+- condições comerciais;
+- histórico;
+- detalhes e exclusão;
+- geração de PDF pelo navegador;
+- armazenamento local com `localStorage`.
 
-## Arquitetura
+> O `localStorage` é temporário e serve apenas para validar a experiência. Ele não será usado como armazenamento definitivo do SaaS comercial.
 
-### Protótipo desktop
-- Python
-- Tkinter
-- SQLite
-- ReportLab
+## Arquitetura comercial planejada
 
-Arquivos principais:
+A evolução seguirá esta ordem:
 
 ```
-main.py
-dados.py
-historico.py
-pdf.py
-requirements.txt
+Frontend mobile
+      ↓
+Conta do usuário / autenticação
+      ↓
+Backend / API
+      ↓
+Banco de dados centralizado
+      ↓
+Assinatura e controle de acesso
+      ↓
+Produto comercial
 ```
 
-### Protótipo mobile
-- HTML
-- CSS
-- JavaScript
-- jsPDF
-- localStorage
+O banco central deverá separar, no mínimo:
 
-Arquivos:
+- usuários;
+- empresas;
+- clientes;
+- orçamentos;
+- itens de orçamento;
+- assinaturas;
+- plano do usuário.
 
-```
-web/
-├── index.html
-├── style.css
-└── app.js
-```
+Cada usuário deverá acessar somente os próprios dados.
 
-## Próxima arquitetura de produção
+## Planos planejados para o lançamento
 
-O protótipo mobile usa `localStorage` apenas para validar a experiência de uso. Para um produto comercial, os dados deverão migrar para um backend com banco de dados centralizado, permitindo:
+| Plano | Preço mensal | Posicionamento |
+|---|---:|---|
+| Essencial | R$ 19,90 | Para começar |
+| Profissional | R$ 39,90 | **Mais escolhido** |
+| MAX | R$ 79,90 | Para quem quer o processo comercial completo |
 
-- conta do usuário;
-- sincronização entre celular e PC;
-- histórico permanente;
-- backup;
-- clientes cadastrados;
-- edição de orçamentos;
-- compartilhamento;
-- controle de acesso;
-- planos gratuito e pago.
+Os preços são **hipóteses de lançamento**, não uma promessa definitiva. Serão validados com os primeiros clientes.
 
-## Roadmap
+## Regra de desenvolvimento
 
-- [x] Protótipo desktop
-- [x] Banco relacional inicial
-- [x] Histórico desktop
-- [x] Regeneração de PDF
-- [x] Primeiro protótipo web mobile
-- [ ] Teste real pelo celular
-- [ ] Melhorar experiência mobile
-- [ ] Cadastro completo de clientes
-- [ ] Edição de orçamentos
-- [ ] Compartilhamento por WhatsApp
-- [ ] Backend e banco centralizado
-- [ ] Login e contas
-- [ ] PWA instalável
-- [ ] Modelo comercial
+Não construir funcionalidades caras antes de validar a demanda.
+
+Prioridade:
+
+1. produto funcional;
+2. contas e banco centralizado;
+3. assinatura;
+4. primeiros clientes pagantes;
+5. melhorias baseadas no uso real;
+6. recursos avançados.
+
+Recursos como IA, WhatsApp automatizado, assinatura digital, dashboard avançado e multiusuário entram depois da validação comercial.
+
+## Roadmap de lançamento
+
+### Fase 1 — MVP comercial
+- [x] Protótipo mobile
+- [x] PDF
+- [x] Histórico
+- [x] Dados da empresa
+- [ ] Cadastro de clientes reutilizáveis
+- [ ] Edição de orçamento
+- [ ] Backend
+- [ ] Banco centralizado
+- [ ] Login
+- [ ] Controle de acesso
+
+### Fase 2 — Monetização
+- [ ] Página de preços
+- [ ] Teste grátis
+- [ ] Integração de pagamento recorrente
+- [ ] Assinaturas
+- [ ] Limites por plano
+- [ ] Tela de conta/assinatura
+
+### Fase 3 — Lançamento
+- [ ] Domínio próprio
+- [ ] Landing page
+- [ ] Termos e política de privacidade
+- [ ] Monitoramento de erros
+- [ ] Primeiros clientes pagantes
+
+### Fase 4 — Evolução pós-venda
+- [ ] Link público do orçamento
+- [ ] Aprovação online
+- [ ] Compartilhamento otimizado por WhatsApp
+- [ ] Desconto
+- [ ] Produtos/serviços cadastrados
+- [ ] Dashboard
+- [ ] IA
+- [ ] Assinatura digital
+- [ ] Multiusuário
+
+## Princípio
+
+**Lançar cedo. Cobrar cedo. Aprender cedo. Melhorar com dados reais.**
