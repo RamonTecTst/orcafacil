@@ -23,6 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let sessaoOnline = null;
   let modoOnline = false;
 
+  function mostrarStatus(texto, erro = false) {
+    const elemento = $("appStatus");
+    if (!elemento) return;
+    elemento.textContent = texto;
+    elemento.dataset.error = erro ? "true" : "false";
+  }
+
   async function iniciarNuvem() {
     if (!supabaseClient) return false;
     const { data, error } = await supabaseClient.auth.getSession();
@@ -48,7 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (empresaError || clientesError || orcamentosError) {
       const erro = empresaError || clientesError || orcamentosError;
       console.error("OrçaFácil: falha ao carregar dados online.", erro);
-      modoOnline = true;
+      orcamentos = [];
+      empresa = {};
+      preencherEmpresa();
+      renderHistorico();
+      mostrarStatus("Não foi possível sincronizar a conta. Os dados locais não serão usados nesta sessão.", true);
       alert("Não foi possível carregar seus dados online. Nenhum dado local será usado enquanto a conta estiver conectada.");
       return;
     }
@@ -577,6 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("loginBtnTop").textContent = "Entrar";
         limparFormulario();
         renderHistorico();
+        mostrarStatus("Modo local: dados ficam neste dispositivo.", false);
       }
     });
 
