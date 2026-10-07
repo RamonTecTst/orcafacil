@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     status.dataset.error = erro ? "true" : "false";
   }
 
-  if (!config?.SUPABASE_URL || !config?.SUPABASE_ANON_KEY || !window.supabase) {
+  if (!config?.SUPABASE_URL || !config?.SUPABASE_PUBLISHABLE_KEY || !window.supabase) {
     mensagem("Modo online ainda não configurado. Crie o projeto Supabase e o arquivo config.js. Você pode continuar usando o modo local.", false);
     loginBtn.disabled = true;
     signupBtn.disabled = true;
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const client = window.supabase.createClient(
     config.SUPABASE_URL,
-    config.SUPABASE_ANON_KEY
+    config.SUPABASE_PUBLISHABLE_KEY
   );
 
   async function redirecionarSeLogado() {
