@@ -93,7 +93,13 @@ function iniciarAutenticacao() {
     }
 
     try {
-      const { data, error } = await client.auth.signUp({ email, password });
+      const { data, error } = await client.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/web/auth.html`
+        }
+      });
 
       if (error) {
         mensagem(error.message || "Não foi possível criar a conta.", true);
