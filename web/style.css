@@ -106,3 +106,26 @@ button { border: 0; border-radius: 11px; padding: 11px 14px; font-weight: 800; c
 .form-help[data-error="true"] {
   color: #b91c1c;
 }
+
+
+.app-status {
+  width: min(720px, calc(100% - 28px));
+  margin: 10px auto 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.app-status:empty { display: none; }
+
+.app-status[data-error="true"] {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.print-validity { margin-top: 8px; }
+.print-footer { margin-top: 30px; }
