@@ -218,3 +218,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# OrçaFácil local runtime data
+orcafacil.db
+orcafacil.db-*
+orcamentos/
+*.sqlite
+*.sqlite3
+
+# Local frontend configuration / secrets
+web/config.local.js
+web/config.secret.js
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
