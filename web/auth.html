@@ -16,7 +16,7 @@
         <p>Entre para salvar seus dados na nuvem e acessar seus orçamentos em qualquer dispositivo.</p>
       </div>
 
-      <div id="authStatus" class="form-help"></div>
+      <div id="authStatus" class="form-help">Carregando autenticação...</div>
 
       <form id="authForm">
         <label>E-mail
@@ -34,10 +34,110 @@
   </main>
 
   <script src="config.js"></script>
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-    onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"
-  ></script>
-  <script src="auth.js?v=20261007-1"></script>
+  <script>
+    // Diagnóstico imediato: se este texto mudar ao clicar, a página está executando JavaScript.
+    (function () {
+      const status = document.getElementById("authStatus");
+      const form = document.getElementById("authForm");
+      const loginBtn = document.getElementById("loginBtn");
+      const signupBtn = document.getElementById("signupBtn");
+
+      function statusMsg(texto, erro) {
+        if (!status) return;
+        status.textContent = texto;
+        status.dataset.error = erro ? "true" : "false";
+      }
+
+      if (!window.ORCAFACIL_CONFIG) {
+        statusMsg("ERRO: config.js não carregou.", true);
+        return;
+      }
+
+      statusMsg("Página carregada. Testando conexão...");
+
+      async function authRest(path, body) {
+        const response = await fetch(
+          window.ORCAFACIL_CONFIG.SUPABASE_URL + "/auth/v1/" + path,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": window.ORCAFACIL_CONFIG.SUPABASE_PUBLISHABLE_KEY
+            },
+            body: JSON.stringify(body)
+          }
+        );
+
+        let data = {};
+        try { data = await response.json(); } catch (_) {}
+
+        if (!response.ok) {
+          throw new Error(data.msg || data.message || data.error_description || "Erro HTTP " + response.status);
+        }
+
+        return data;
+      }
+
+      signupBtn.addEventListener("click", async function () {
+        statusMsg("Clique recebido. Criando conta...");
+        loginBtn.disabled = true;
+        signupBtn.disabled = true;
+
+        try {
+          const email = document.getElementById("authEmail").value.trim();
+          const password = document.getElementById("authPassword").value;
+
+          if (!email || password.length < 6) {
+            throw new Error("Informe um e-mail e uma senha com pelo menos 6 caracteres.");
+          }
+
+          const data = await authRest("signup", { email, password });
+
+          if (data.access_token) {
+            statusMsg("Conta criada com sucesso. Entrando...");
+            window.location.href = "index.html";
+          } else {
+            statusMsg("Conta criada. Verifique o e-mail se a confirmação estiver ativada.");
+          }
+        } catch (erro) {
+          console.error("OrçaFácil cadastro:", erro);
+          statusMsg("Cadastro: " + erro.message, true);
+        } finally {
+          loginBtn.disabled = false;
+          signupBtn.disabled = false;
+        }
+      });
+
+      form.addEventListener("submit", async function (evento) {
+        evento.preventDefault();
+        statusMsg("Clique recebido. Entrando...");
+        loginBtn.disabled = true;
+        signupBtn.disabled = true;
+
+        try {
+          const email = document.getElementById("authEmail").value.trim();
+          const password = document.getElementById("authPassword").value;
+
+          if (!email || password.length < 6) {
+            throw new Error("Informe um e-mail e uma senha com pelo menos 6 caracteres.");
+          }
+
+          const data = await authRest("token?grant_type=password", { email, password });
+
+          if (!data.access_token) throw new Error("Login não retornou uma sessão.");
+
+          localStorage.setItem("orcafacil_auth_session", JSON.stringify(data));
+          statusMsg("Login realizado. Abrindo o OrçaFácil...");
+          window.location.href = "index.html";
+        } catch (erro) {
+          console.error("OrçaFácil login:", erro);
+          statusMsg("Login: " + erro.message, true);
+        } finally {
+          loginBtn.disabled = false;
+          signupBtn.disabled = false;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
