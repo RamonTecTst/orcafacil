@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let empresa = carregarEmpresa();
 
   const config = window.ORCAFACIL_CONFIG;
-  const supabaseClient = (config?.SUPABASE_URL && config?.SUPABASE_ANON_KEY && window.supabase)
-    ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+  const supabaseClient = (config?.SUPABASE_URL && config?.SUPABASE_PUBLISHABLE_KEY && window.supabase)
+    ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_PUBLISHABLE_KEY)
     : null;
 
   let sessaoOnline = null;
