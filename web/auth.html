@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#111827">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://urcutleggwgtmsedevwb.supabase.co wss://urcutleggwgtmsedevwb.supabase.co; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; form-action 'self'; upgrade-insecure-requests">
   <title>Entrar — OrçaFácil</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,14 +18,14 @@
         <p>Entre para salvar seus dados na nuvem e acessar seus orçamentos em qualquer dispositivo.</p>
       </div>
 
-      <div id="authStatus" class="form-help">Carregando autenticação...</div>
+      <div id="authStatus" class="form-help" role="status" aria-live="polite">Carregando autenticação...</div>
 
-      <form id="authForm">
-        <label>E-mail
-          <input id="authEmail" type="email" autocomplete="email" required placeholder="voce@email.com">
+      <form id="authForm" novalidate>
+        <label for="authEmail">E-mail
+          <input id="authEmail" type="email" autocomplete="email" required maxlength="254" placeholder="voce@email.com">
         </label>
-        <label>Senha
-          <input id="authPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Mínimo de 6 caracteres">
+        <label for="authPassword">Senha
+          <input id="authPassword" type="password" autocomplete="current-password" required minlength="8" maxlength="128" placeholder="Mínimo de 8 caracteres">
         </label>
         <button id="loginBtn" class="primary full" type="submit">Entrar</button>
         <button id="signupBtn" class="secondary full" type="button">Criar conta</button>
@@ -33,8 +35,9 @@
     </section>
   </main>
 
-  <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="auth.js?v=20261007-3"></script>
+  <script src="config.js?v=20261007-4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+  <script src="auth.js?v=20261007-4"></script>
+  <script src="auth-guard.js?v=20261007-1"></script>
 </body>
 </html>
