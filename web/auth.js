@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+function iniciarAutenticacao() {
   const config = window.ORCAFACIL_CONFIG;
   const status = document.getElementById("authStatus");
   const form = document.getElementById("authForm");
@@ -10,27 +10,48 @@ document.addEventListener("DOMContentLoaded", () => {
     status.dataset.error = erro ? "true" : "false";
   }
 
-  if (!config?.SUPABASE_URL || !config?.SUPABASE_PUBLISHABLE_KEY || !window.supabase) {
-    mensagem("Modo online ainda não configurado. Crie o projeto Supabase e o arquivo config.js. Você pode continuar usando o modo local.", false);
-    loginBtn.disabled = true;
-    signupBtn.disabled = true;
+  if (!status || !form || !loginBtn || !signupBtn) {
+    console.error("OrçaFácil: elementos da autenticação não foram encontrados.");
     return;
   }
 
-  const client = window.supabase.createClient(
-    config.SUPABASE_URL,
-    config.SUPABASE_PUBLISHABLE_KEY
-  );
-
-  async function redirecionarSeLogado() {
-    const { data } = await client.auth.getSession();
-    if (data.session) window.location.href = "index.html";
+  if (!config?.SUPABASE_URL || !config?.SUPABASE_PUBLISHABLE_KEY) {
+    mensagem("Modo online ainda não configurado. Verifique o arquivo config.js.", true);
+    return;
   }
 
-  redirecionarSeLogado();
+  if (!window.supabase?.createClient) {
+    mensagem("Não foi possível carregar o módulo de autenticação. Recarregue a página.", true);
+    console.error("OrçaFácil: Supabase JS não foi carregado.");
+    return;
+  }
+
+  let client;
+
+  try {
+    client = window.supabase.createClient(
+      config.SUPABASE_URL,
+      config.SUPABASE_PUBLISHABLE_KEY
+    );
+  } catch (erro) {
+    console.error("OrçaFácil: falha ao inicializar Supabase.", erro);
+    mensagem("Falha ao iniciar a autenticação. Verifique a configuração do Supabase.", true);
+    return;
+  }
+
+  async function redirecionarSeLogado() {
+    try {
+      const { data, error } = await client.auth.getSession();
+      if (error) throw error;
+      if (data.session) window.location.href = "index.html";
+    } catch (erro) {
+      console.error("OrçaFácil: não foi possível verificar a sessão.", erro);
+    }
+  }
 
   form.addEventListener("submit", async (evento) => {
     evento.preventDefault();
+
     loginBtn.disabled = true;
     signupBtn.disabled = true;
     mensagem("Entrando...");
@@ -38,16 +59,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
 
-    const { error } = await client.auth.signInWithPassword({ email, password });
+    try {
+      const { error } = await client.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      mensagem(error.message || "Não foi possível entrar.", true);
+      if (error) {
+        mensagem(error.message || "Não foi possível entrar.", true);
+        return;
+      }
+
+      window.location.href = "index.html";
+    } catch (erro) {
+      console.error("OrçaFácil: erro inesperado no login.", erro);
+      mensagem("Erro inesperado ao entrar. Tente novamente.", true);
+    } finally {
       loginBtn.disabled = false;
       signupBtn.disabled = false;
-      return;
     }
-
-    window.location.href = "index.html";
   });
 
   signupBtn.addEventListener("click", async () => {
@@ -65,15 +92,34 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const { error } = await client.auth.signUp({ email, password });
+    try {
+      const { data, error } = await client.auth.signUp({ email, password });
 
-    if (error) {
-      mensagem(error.message || "Não foi possível criar a conta.", true);
-    } else {
-      mensagem("Conta criada. Se a confirmação por e-mail estiver ativa, confira sua caixa de entrada antes de entrar.");
+      if (error) {
+        mensagem(error.message || "Não foi possível criar a conta.", true);
+        return;
+      }
+
+      if (data.session) {
+        mensagem("Conta criada com sucesso. Entrando...");
+        window.location.href = "index.html";
+      } else {
+        mensagem("Conta criada. Se a confirmação por e-mail estiver ativa, confira sua caixa de entrada antes de entrar.");
+      }
+    } catch (erro) {
+      console.error("OrçaFácil: erro inesperado no cadastro.", erro);
+      mensagem("Erro inesperado ao criar a conta. Tente novamente.", true);
+    } finally {
+      loginBtn.disabled = false;
+      signupBtn.disabled = false;
     }
-
-    loginBtn.disabled = false;
-    signupBtn.disabled = false;
   });
-});
+
+  redirecionarSeLogado();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", iniciarAutenticacao);
+} else {
+  iniciarAutenticacao();
+}
