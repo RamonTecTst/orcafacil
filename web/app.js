@@ -9,9 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
   let empresa = carregarEmpresa();
 
   const config = window.ORCAFACIL_CONFIG;
-  const supabaseClient = (config?.SUPABASE_URL && config?.SUPABASE_PUBLISHABLE_KEY && window.supabase)
-    ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_PUBLISHABLE_KEY)
-    : null;
+  let supabaseClient = null;
+  try {
+    if (config?.SUPABASE_URL && config?.SUPABASE_PUBLISHABLE_KEY && window.supabase?.createClient) {
+      supabaseClient = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_PUBLISHABLE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+    }
+  } catch (erro) {
+    console.error("OrçaFácil: falha ao inicializar Supabase.", erro);
+  }
 
   let sessaoOnline = null;
   let modoOnline = false;
@@ -39,9 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ]);
 
     if (empresaError || clientesError || orcamentosError) {
-      console.error(empresaError || clientesError || orcamentosError);
-      alert("Não foi possível carregar seus dados online. O modo local continuará disponível.");
-      modoOnline = false;
+      const erro = empresaError || clientesError || orcamentosError;
+      console.error("OrçaFácil: falha ao carregar dados online.", erro);
+      modoOnline = true;
+      alert("Não foi possível carregar seus dados online. Nenhum dado local será usado enquanto a conta estiver conectada.");
       return;
     }
 
@@ -103,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .from("clientes")
       .select("id,nome,telefone,email,endereco")
       .eq("user_id", userId)
-      .ilike("nome", orcamento.cliente)
+      .eq("nome", orcamento.cliente)
       .limit(1);
 
     if (buscaError) throw buscaError;
@@ -142,39 +150,79 @@ document.addEventListener("DOMContentLoaded", () => {
   async function salvarOrcamentoNuvem(orcamento) {
     const clienteId = await buscarOuCriarClienteNuvem(orcamento);
 
-    const { data: novoOrcamento, error: orcamentoError } = await supabaseClient
-      .from("orcamentos")
-      .insert({
-        user_id: sessaoOnline.user.id,
-        cliente_id: clienteId,
-        numero: orcamento.numero,
-        titulo: orcamento.titulo || null,
-        validade_dias: orcamento.validade,
-        pagamento: orcamento.pagamento || null,
-        prazo: orcamento.prazo || null,
-        garantia: orcamento.garantia || null,
-        observacoes: orcamento.observacoes || null,
-        status: "enviado",
-        total: orcamento.total
-      })
-      .select("id")
-      .single();
+    const resultado = await supabaseClient.rpc("criar_orcamento", {
+      p_cliente_id: clienteId,
+      p_titulo: orcamento.titulo || null,
+      p_validade_dias: orcamento.validade,
+      p_pagamento: orcamento.pagamento || null,
+      p_prazo: orcamento.prazo || null,
+      p_garantia: orcamento.garantia || null,
+      p_observacoes: orcamento.observacoes || null,
+      p_itens: orcamento.itens.map(item => ({
+        descricao: item.descricao,
+        quantidade: item.quantidade,
+        valor_unitario: item.valorUnitario
+      }))
+    });
 
-    if (orcamentoError) throw orcamentoError;
+    if (resultado.error) {
+      if (
+        resultado.error.code !== "PGRST202" &&
+        !String(resultado.error.message || "").toLowerCase().includes("could not find the function")
+      ) {
+        throw resultado.error;
+      }
 
-    const linhas = orcamento.itens.map(item => ({
-      orcamento_id: novoOrcamento.id,
-      descricao: item.descricao,
-      quantidade: item.quantidade,
-      valor_unitario: item.valorUnitario,
-      subtotal: item.subtotal
-    }));
+      // Compatibilidade temporária com projetos que ainda não executaram o schema atualizado.
+      const { data: novoOrcamento, error: orcamentoError } = await supabaseClient
+        .from("orcamentos")
+        .insert({
+          user_id: sessaoOnline.user.id,
+          cliente_id: clienteId,
+          numero: orcamento.numero,
+          titulo: orcamento.titulo || null,
+          validade_dias: orcamento.validade,
+          pagamento: orcamento.pagamento || null,
+          prazo: orcamento.prazo || null,
+          garantia: orcamento.garantia || null,
+          observacoes: orcamento.observacoes || null,
+          status: "enviado",
+          total: orcamento.total
+        })
+        .select("id,numero,total")
+        .single();
 
-    const { error: itensError } = await supabaseClient
-      .from("itens_orcamento")
-      .insert(linhas);
+      if (orcamentoError) throw orcamentoError;
 
-    if (itensError) throw itensError;
+      const linhas = orcamento.itens.map(item => ({
+        orcamento_id: novoOrcamento.id,
+        descricao: item.descricao,
+        quantidade: item.quantidade,
+        valor_unitario: item.valorUnitario,
+        subtotal: item.subtotal
+      }));
+
+      const { error: itensError } = await supabaseClient
+        .from("itens_orcamento")
+        .insert(linhas);
+
+      if (itensError) throw itensError;
+
+      return {
+        id: novoOrcamento.id,
+        numero: Number(novoOrcamento.numero),
+        total: Number(novoOrcamento.total)
+      };
+    }
+
+    const linha = Array.isArray(resultado.data) ? resultado.data[0] : resultado.data;
+    if (!linha?.numero) throw new Error("O banco não retornou o número do orçamento.");
+
+    return {
+      id: linha.id,
+      numero: Number(linha.numero),
+      total: Number(linha.total)
+    };
   }
 
   async function excluirOrcamentoNuvem(numero) {
@@ -276,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!Number.isFinite(quantidade) || quantidade <= 0) { alert("Digite uma quantidade válida."); $("quantidade").focus(); return; }
     if (!Number.isFinite(valorUnitario) || valorUnitario < 0) { alert("Digite um valor válido."); $("valor").focus(); return; }
 
-    itens.push({ descricao, quantidade, valorUnitario, subtotal: quantidade * valorUnitario });
+    itens.push({ descricao, quantidade, valorUnitario, subtotal: Math.round(quantidade * valorUnitario * 100) / 100 });
     $("descricao").value = "";
     $("quantidade").value = "1";
     $("valor").value = "";
@@ -334,7 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!cliente) { alert("Digite o nome do cliente."); $("cliente").focus(); return; }
     if (!itens.length) { alert("Adicione pelo menos um item."); return; }
 
-    const orcamento = {
+    let orcamento = {
       numero: proximoNumero(),
       titulo: $("titulo").value.trim(),
       cliente,
@@ -348,7 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
       observacoes: $("observacoes").value.trim(),
       data: new Date().toLocaleDateString("pt-BR"),
       itens: JSON.parse(JSON.stringify(itens)),
-      total: itens.reduce((soma,item) => soma + item.subtotal, 0)
+      total: Math.round(itens.reduce((soma,item) => soma + item.subtotal, 0) * 100) / 100
     };
 
     const botao = $("gerarBtn");
@@ -357,8 +405,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       if (modoOnline) {
-        await salvarOrcamentoNuvem(orcamento);
+        const salvo = await salvarOrcamentoNuvem(orcamento);
         await carregarDadosNuvem();
+        const atualizado = encontrar(salvo.numero);
+        if (atualizado) orcamento = atualizado;
       } else {
         orcamentos.unshift(orcamento);
         salvarOrcamentos();
@@ -444,8 +494,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      if (modoOnline) await salvarEmpresaNuvem();
-      salvarEmpresa();
+      if (modoOnline) {
+        await salvarEmpresaNuvem();
+      } else {
+        salvarEmpresa();
+      }
       alert(modoOnline ? "Dados da empresa salvos na nuvem." : "Dados da empresa salvos.");
       mostrar("form");
     } catch (erro) {
@@ -518,7 +571,12 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         sessaoOnline = null;
         modoOnline = false;
+        orcamentos = carregarOrcamentos();
+        empresa = carregarEmpresa();
+        preencherEmpresa();
         $("loginBtnTop").textContent = "Entrar";
+        limparFormulario();
+        renderHistorico();
       }
     });
 
