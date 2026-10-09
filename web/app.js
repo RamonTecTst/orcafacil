@@ -97,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
     preencherEmpresa();
     $("numeroPreview").textContent = "#" + proximoNumero();
     renderHistorico();
+    mostrarStatus("Conta conectada · dados sincronizados na nuvem.", false);
   }
 
   async function salvarEmpresaNuvem() {
@@ -352,34 +353,90 @@ document.addEventListener("DOMContentLoaded", () => {
     renderItens();
   }
 
+  function documentoEmpresa(documento) {
+    const digitos = String(documento || "").replace(/\D/g, "");
+    if (digitos.length === 11) {
+      return "CPF " + digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    }
+    if (digitos.length === 14) {
+      return "CNPJ " + digitos.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    }
+    return documento ? "Documento: " + documento : "";
+  }
+
   function gerarPDF(orcamento) {
     const area = $("printArea");
     const linhas = orcamento.itens.map(item => `
-      <tr><td>${escapar(item.descricao)}</td><td>${item.quantidade} × ${moeda(item.valorUnitario)}</td><td>${moeda(item.subtotal)}</td></tr>
+      <tr>
+        <td class="print-description">${escapar(item.descricao)}</td>
+        <td class="print-quantity">${item.quantidade} × ${moeda(item.valorUnitario)}</td>
+        <td class="print-subtotal">${moeda(item.subtotal)}</td>
+      </tr>
     `).join("");
 
-    area.innerHTML = `
-      <h1>${escapar(empresa.nome || "ORÇAFÁCIL")}</h1>
-      ${empresa.documento ? `<div class="print-muted">CPF/CNPJ: ${escapar(empresa.documento)}</div>` : ""}
-      ${empresa.telefone || empresa.email ? `<div class="print-muted">${escapar([empresa.telefone,empresa.email].filter(Boolean).join(" · "))}</div>` : ""}
-      ${empresa.endereco ? `<div class="print-muted">${escapar(empresa.endereco)}</div>` : ""}
-      <div class="print-client"><strong>${escapar(orcamento.titulo || "Orçamento")}</strong><br><span class="print-muted">Orçamento #${orcamento.numero} · Data: ${orcamento.data}</span></div>
+    const documento = documentoEmpresa(empresa.documento);
+    const contatoEmpresa = [empresa.telefone, empresa.email].filter(Boolean);
+    const contatoCliente = [orcamento.telefone, orcamento.email].filter(Boolean);
 
-      <div class="print-client">
-        <strong>Cliente:</strong> ${escapar(orcamento.cliente)}
-        ${orcamento.telefone ? `<br><span class="print-muted">Telefone: ${escapar(orcamento.telefone)}</span>` : ""}
-        ${orcamento.email ? `<br><span class="print-muted">E-mail: ${escapar(orcamento.email)}</span>` : ""}
-        ${orcamento.endereco ? `<br><span class="print-muted">Endereço: ${escapar(orcamento.endereco)}</span>` : ""}
+    area.innerHTML = `
+      <div class="print-header">
+        <div class="print-brand">
+          <span class="print-brand-mark">OF</span>
+          <div>
+            <div class="print-brand-name">OrçaFácil</div>
+            <div class="print-brand-caption">ORVEXA · GESTÃO COMERCIAL</div>
+          </div>
+        </div>
+        <div class="print-document-meta">
+          <span class="print-label">ORÇAMENTO</span>
+          <strong>#${orcamento.numero}</strong>
+          <span class="print-muted">Emitido em ${escapar(orcamento.data)}</span>
+        </div>
       </div>
 
-      <table><thead><tr><th>Descrição</th><th>Quantidade / Unitário</th><th>Subtotal</th></tr></thead><tbody>${linhas}</tbody></table>
-      <div class="print-total">TOTAL: ${moeda(orcamento.total)}</div>
-      <div class="print-muted" style="margin-top:8px">Validade: ${orcamento.validade} dias</div>
-      ${orcamento.pagamento ? `<div class="print-notes"><strong>Forma de pagamento:</strong> ${escapar(orcamento.pagamento)}</div>` : ""}
-      ${orcamento.prazo ? `<div class="print-notes"><strong>Prazo de execução:</strong> ${escapar(orcamento.prazo)}</div>` : ""}
-      ${orcamento.garantia ? `<div class="print-notes"><strong>Garantia:</strong> ${escapar(orcamento.garantia)}</div>` : ""}
-      ${orcamento.observacoes ? `<div class="print-notes"><strong>Observações:</strong><br>${escapar(orcamento.observacoes)}</div>` : ""}
-      <div class="print-muted" style="margin-top:30px">Gerado pelo OrçaFácil</div>
+      ${orcamento.titulo ? `<h2 class="print-quote-title">${escapar(orcamento.titulo)}</h2>` : ""}
+
+      <div class="print-parties">
+        <section class="print-party">
+          <span class="print-label">PRESTADOR</span>
+          <strong class="print-party-name">${escapar(empresa.nome || "Prestador de serviço")}</strong>
+          ${documento ? `<span class="print-muted">${escapar(documento)}</span>` : ""}
+          ${contatoEmpresa.length ? `<span class="print-muted">${escapar(contatoEmpresa.join(" · "))}</span>` : ""}
+          ${empresa.endereco ? `<span class="print-muted">${escapar(empresa.endereco)}</span>` : ""}
+        </section>
+        <section class="print-party">
+          <span class="print-label">CLIENTE</span>
+          <strong class="print-party-name">${escapar(orcamento.cliente)}</strong>
+          ${contatoCliente.length ? `<span class="print-muted">${escapar(contatoCliente.join(" · "))}</span>` : ""}
+          ${orcamento.endereco ? `<span class="print-muted">${escapar(orcamento.endereco)}</span>` : ""}
+        </section>
+      </div>
+
+      <table class="print-items-table">
+        <thead><tr><th>Descrição</th><th>Quantidade / Unitário</th><th>Subtotal</th></tr></thead>
+        <tbody>${linhas}</tbody>
+      </table>
+
+      <div class="print-total-card">
+        <span>Total do orçamento</span>
+        <strong>${moeda(orcamento.total)}</strong>
+      </div>
+
+      <div class="print-terms">
+        <div class="print-term">
+          <span class="print-label">VALIDADE</span>
+          <strong>${orcamento.validade} dias</strong>
+        </div>
+        ${orcamento.pagamento ? `<div class="print-term"><span class="print-label">PAGAMENTO</span><strong>${escapar(orcamento.pagamento)}</strong></div>` : ""}
+        ${orcamento.prazo ? `<div class="print-term"><span class="print-label">PRAZO / PERÍODO</span><strong>${escapar(orcamento.prazo)}</strong></div>` : ""}
+        ${orcamento.garantia ? `<div class="print-term"><span class="print-label">GARANTIA / CONDIÇÕES</span><strong>${escapar(orcamento.garantia)}</strong></div>` : ""}
+      </div>
+
+      ${orcamento.observacoes ? `<div class="print-observations"><span class="print-label">OBSERVAÇÕES</span><p>${escapar(orcamento.observacoes)}</p></div>` : ""}
+      <div class="print-footer">
+        <span>Obrigado pela oportunidade.</span>
+        <strong>Gerado com OrçaFácil · ORVEXA</strong>
+      </div>
     `;
 
     const tituloAnterior = document.title;
@@ -420,9 +477,11 @@ document.addEventListener("DOMContentLoaded", () => {
         await carregarDadosNuvem();
         const atualizado = encontrar(salvo.numero);
         if (atualizado) orcamento = atualizado;
+        mostrarStatus("Orçamento salvo na nuvem e pronto para exportar.", false);
       } else {
         orcamentos.unshift(orcamento);
         salvarOrcamentos();
+        mostrarStatus("Orçamento salvo neste dispositivo. Entre na sua conta para sincronizar na nuvem.", false);
       }
 
       gerarPDF(orcamento);
@@ -510,6 +569,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         salvarEmpresa();
       }
+      mostrarStatus(modoOnline ? "Dados da empresa salvos na nuvem." : "Dados da empresa salvos neste dispositivo.", false);
       alert(modoOnline ? "Dados da empresa salvos na nuvem." : "Dados da empresa salvos.");
       mostrar("form");
     } catch (erro) {
