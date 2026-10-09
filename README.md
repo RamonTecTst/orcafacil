@@ -70,7 +70,7 @@ Cada usuário deverá acessar somente os próprios dados.
 | Profissional | R$ 39,90 | **Mais escolhido** |
 | MAX | R$ 79,90 | Para quem quer o processo comercial completo |
 
-Os preços são **hipóteses de lançamento**, não uma promessa definitiva. Serão validados com os primeiros clientes.
+Os preços são **hipóteses de lançamento**, não uma promessa definitiva. Serão validados com os primeiros clientes. O modelo editável de custos, margens e ponto de equilíbrio está em [`docs/modelo-custos-e-precos.md`](docs/modelo-custos-e-precos.md).
 
 ## Regra de desenvolvimento
 
@@ -110,6 +110,8 @@ Recursos como IA, WhatsApp automatizado, assinatura digital, dashboard avançado
 - [ ] Tela de conta/assinatura
 
 ### Fase 3 — Lançamento
+- [ ] Migrar o frontend para hospedagem compatível com SaaS comercial (GitHub Pages não é adequado para essa finalidade)
+- [ ] Confirmar custos reais de hospedagem, e-mail, cobrança e contabilidade
 - [ ] Domínio próprio
 - [ ] Landing page
 - [ ] Termos e política de privacidade
