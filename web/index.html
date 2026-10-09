@@ -11,9 +11,10 @@
 </head>
 <body>
   <header class="topbar">
-    <div>
+    <div class="brand-lockup">
+      <span class="brand-kicker">ORVEXA</span>
       <h1>OrçaFácil</h1>
-      <p>Orçamentos rápidos pelo celular</p>
+      <p>Orçamentos profissionais, direto do celular</p>
     </div>
     <div class="top-actions"><button id="loginBtnTop" class="secondary">Entrar</button><button id="empresaBtn" class="secondary">Empresa</button><button id="novoBtn" class="secondary">Novo</button></div>
   </header>
@@ -78,17 +79,17 @@
       </div>
 
       <div class="card">
-        <label>Forma de pagamento
-          <input id="pagamento" type="text" placeholder="Ex.: 50% na aprovação e 50% na entrega">
+        <label>Forma de pagamento (opcional)
+          <input id="pagamento" type="text" placeholder="Ex.: PIX, transferência ou a combinar">
         </label>
-        <label>Prazo de execução
-          <input id="prazo" type="text" placeholder="Ex.: Até 5 dias úteis">
+        <label>Prazo / período de entrega (opcional)
+          <input id="prazo" type="text" placeholder="Ex.: 5 dias úteis ou acesso por 30 dias">
         </label>
-        <label>Garantia
-          <input id="garantia" type="text" placeholder="Ex.: 90 dias para mão de obra">
+        <label>Garantia / condições (opcional)
+          <input id="garantia" type="text" placeholder="Ex.: 90 dias ou condições da assinatura">
         </label>
-        <label>Observações
-          <textarea id="observacoes" rows="3" placeholder="Prazo, forma de pagamento, garantia..."></textarea>
+        <label>Observações (opcional)
+          <textarea id="observacoes" rows="3" placeholder="Inclua condições específicas; deixe em branco o que não se aplica."></textarea>
         </label>
       </div>
 
@@ -106,7 +107,7 @@
           <input id="empresaNome" type="text" placeholder="Ex.: João Serviços">
         </label>
         <label>CPF ou CNPJ
-          <input id="empresaDocumento" type="text" placeholder="Opcional">
+          <input id="empresaDocumento" type="text" placeholder="Somente números ou com pontuação" inputmode="numeric" autocomplete="off" maxlength="18">
         </label>
         <div class="grid-2">
           <label>Telefone / WhatsApp
@@ -142,6 +143,6 @@
 
   <script src="config.js?v=20261007-4"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
-  <script src="app.js?v=20261007-5"></script>
+  <script src="app.js?v=20261009-1"></script>
 </body>
 </html>
